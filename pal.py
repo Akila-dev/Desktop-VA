@@ -1,6 +1,9 @@
 import tkinter as tk
 import pyttsx3
+import speech_recognition as sr
 import datetime
+import threading
+import time
 
 
 class Pal:
@@ -9,6 +12,15 @@ class Pal:
         self.bg = '#040410'
         self.light_bg = '#202080'
         self.opac_bg = '#060616'
+        self.intro_text="Hello, I am PAL. Your favourite personal assistant. How may I help you?"
+        # self.intro = 1
+        self.listening = 1
+        
+        self.r = sr.Recognizer()
+        
+        self.engine = pyttsx3.init('sapi5')
+        self.voices = self.engine.getProperty('voices')
+        self.engine.setProperty('voice', self.voices[0].id)
         
         
         self.root = tk.Tk()
@@ -18,10 +30,67 @@ class Pal:
         self.root.title("Personal Assistant Local (PAL)")
         self.root.configure(bg=self.bg)
         
-        self.filler = tk.Label(self.root, text="", bg=self.bg, fg=self.bg)
-        self.filler.pack()
+        self.home()
+        self.say(self.intro_text)
         
-        self.pal_text = tk.Label(self.root, text="Hi, I'm PAL, your virtual assistant", width=70, height=13, bg=self.light_bg, fg="#fff", highlightthickness=1, font=('Montserrat', 13), wraplength=500, justify="center")
+        # self.takeQuery()
+        
+        self.root.mainloop()
+    
+    # def takeQuery(self):
+    #     while(self.listening == 1):
+    #         self.query = self.takeCommand()
+            
+    #         if "show commands" in self.query:
+    #             print(self.query)
+    #             # self.listening = 0
+    
+    def say(self, sentence):
+        self.pal_text.config(text=sentence)
+        threading.Thread(target=lambda:self.speak(sentence)).start()
+        
+        time.sleep(1)
+        # threading.Thread(target=lambda:self.takeCommand).start()
+        self.takeCommand()
+        
+    
+    def speak(self, sentence):
+        self.engine.say(sentence)
+        self.engine.runAndWait()
+    
+    def takeCommand(self):
+        try:
+            with sr.Microphone() as source:
+                print('Listening')
+                
+                self.r.adjust_for_ambient_noise(source, duration=0.2)
+                print('Recognized')
+                
+             
+                #listens for the user's input
+                self.audio2 = self.r.listen(source)
+                print('Recognized')
+                
+                
+                # Using google to recognize audio
+                self.speech = self.r.recognize_google(self.audio)
+                self.speech = self.speech.lower()
+                print('Recognized')
+                self.say(f"Did you say {self.speech}")
+                
+        except sr.RequestError as e:
+            print("Could not request results; {0}".format(e))
+         
+        except sr.UnknownValueError:
+            print("unknown error occurred")
+            
+        return self.speech
+    
+    def home(self):
+        self.filler = tk.Label(self.root, text="", bg=self.bg, fg=self.bg)
+        self.filler.pack(pady=5)
+        
+        self.pal_text = tk.Label(self.root, text="", width=70, height=13, bg=self.light_bg, fg="#fff", highlightthickness=1, font=('Montserrat', 13), wraplength=500, justify="center")
         self.pal_text.pack(pady=30, padx=50)
         
         self.homeFrames = tk.Frame(self.root, bg=self.bg)
@@ -33,15 +102,10 @@ class Pal:
         self.home_pal = tk.Button(self.homeFrames, text='pal', image=self.pal_image, bg=self.bg, activebackground=self.bg, highlightthickness=0, borderwidth=0)
         self.home_pal.grid(row=0, column=1, padx=10)
         
-        # self.account_btn = tk.Button(self.homeFrames, text="User Account", width=22, font=('Arial', 12), pady=10, bg='#81afdd', command=self.open_account_window)
-        # self.account_btn.grid(row=0, column=2, padx=10)
-        
-        self.account_btn = tk.Button(self.homeFrames, text="User Account", width=22, font=('Arial', 12), pady=10, bg=self.opac_bg, fg='#fff', activebackground=self.light_bg, activeforeground='#fff', command=self.open_dictionary_window)
+        self.account_btn = tk.Button(self.homeFrames, text="User Account", width=22, font=('Arial', 12), pady=10, bg=self.opac_bg, fg='#fff', activebackground=self.light_bg, activeforeground='#fff', command=self.open_account_window)
         self.account_btn.grid(row=0, column=2, padx=10)
         
         self.homeFrames.pack()
-        
-        self.root.mainloop()
     
     def listen(self, words):
         self.user_input = words.lower()
@@ -199,5 +263,20 @@ class Pal:
         self.dictionary_close_btn.grid(row=0, column=1, sticky=tk.W+tk.E, padx=10)
         
         self.dictionary_btns_frame.pack(fill='x')
+
+# class PalAI:
+#     def __init__(self):
+#         self.gui = PalGUI()
+#         self.engine = pyttsx3.init('sapi5')
+#         self.voices = self.engine.getProperty('voices')
+#         self.engine.setProperty('voice', self.voices[0].id)
+        
+#         self.speak("Hi")
+    
+#     def speak(self, sentence):
+#         self.engine.say(sentence)
+#         self.engine.runAndWait()
+        
+#         self.gui.pal_text.config(text=sentence)
 
 Pal()
